@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Happy Birthday Mikyal!</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600;700&family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        :root {
+            --pink: #ffb6c1;
+            --hot-pink: #ff69b4;
+            --soft-pink: #fff0f3;
+            --peach: #ffdac1;
+            --dark-text: #4a4a4a;
+            --white: #ffffff;
+        }
+
+        body {
+            width: 100%;
+            height: 100vh;
+            background-color: #222; /* Dark background for desktop to frame the mobile view */
+            font-family: 'Poppins', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            overflow: hidden;
+        }
+
+        #mobile-wrapper {
+            width: 100%;
+            max-width: 430px; /* iPhone Pro Max width approximation */
+            height: 100%;
+            max-height: 932px;
+            background-color: var(--soft-pink);
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 0 40px rgba(0,0,0,0.5);
+            /* Optional: subtle border radius if viewed on desktop */
+            border-radius: 0px; 
+        }
+        @media (min-width: 500px) {
+            #mobile-wrapper {
+                height: 95vh;
+                border-radius: 30px;
+                border: 8px solid #333;
+            }
+        }
+
+        #lockscreen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, #ff9a9e 0%, #fecfef 100%);
+            color: var(--white);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: space-between;
+            z-index: 100;
+            transition: transform 0.6s cubic-bezier(0.4, 0.0, 0.2, 1), opacity 0.6s ease;
+        }
+
+        .lock-top {
+            margin-top: 12vh;
+            text-align: center;
+        }
+
+        .time { font-size: 4.5rem; font-weight: 300; letter-spacing: 2px; }
+        .date { font-size: 1.1rem; font-weight: 400; margin-top: -10px; }
+
+        .pin-container { text-align: center; margin-bottom: 10px; }
+        .pin-dots { display: flex; gap: 15px; justify-content: center; margin-top: 15px; }
+        .dot { width: 14px; height: 14px; border: 2px solid white; border-radius: 50%; transition: 0.2s; }
+        .dot.filled { background-color: white; }
+
+        .keypad {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 20px;
+            margin-bottom: 8vh;
+        }
+
+        .key {
+            width: 70px;
+            height: 70px;
+            border-radius: 50%;
+            border: 1px solid rgba(255,255,255,0.5);
+            background: rgba(255,255,255,0.1);
+            color: white;
+            font-size: 1.8rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            backdrop-filter: blur(5px);
+        }
+        .key:active { background: rgba(255,255,255,0.4); transform: scale(0.95); }
+
+        #game-screen {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: radial-gradient(circle at bottom, #ffe6ea, #ff9a9e);
+            z-index: 80;
+            display: none;
+            overflow: hidden;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .game-header {
+            margin-top: 50px;
+            text-align: center;
+            color: var(--dark-text);
+        }
+        .game-header h2 { font-size: 1.5rem; font-weight: 600; color: #d16b8a; }
+        .game-header p { font-size: 0.9rem; opacity: 0.8; }
+        
+        .score-board {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #ff4757;
+            margin-top: 10px;
+            background: rgba(255,255,255,0.5);
+            padding: 5px 20px;
+            border-radius: 20px;
+        }
+
+        #paddle {
+            position: absolute;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 3.5rem;
+            width: 70px;
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            touch-action: none; /* Prevent screen scroll on touch */
+            z-index: 85;
+            filter: drop-shadow(0 5px 5px rgba(0,0,0,0.2));
+        }
+
+        .falling-heart {
+            position: absolute;
+            font-size: 2rem;
+            z-index: 84;
+            user-select: none;
+        }
+
+        #win-message {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background: white;
+            padding: 30px;
+            border-radius: 20px;
+            text-align: center;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            z-index: 90;
+            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            width: 80%;
+        }
+        #win-message h3 { color: #d16b8a; margin-bottom: 10px; font-size: 1.5rem; }
+
+        #main-content {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: #fff0f3;
+            background-image: radial-gradient(#ffb6c1 1px, transparent 1px);
+            background-size: 20px 20px; /* Cute dotted background */
+            z-index: 50;
+            display: none;
+            overflow-y: auto; /* ENABLE SCROLLING */
+            overflow-x: hidden;
+            scroll-behavior: smooth;
+        }
+
+        .scroll-container {
+            padding: 40px 20px 100px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .music-btn {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: rgba(255,255,255,0.8);
+            border: 2px solid var(--pink);
+            color: #d16b8a;
+            padding: 8px 15px;
+            border-radius: 20px;
+            cursor: pointer;
+            backdrop-filter: blur(5px);
+            z-index: 60;
+            font-weight: 600;
+            font-size: 0.8rem;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        /* Hero Text Area */
+        .hero-section {
+            margin-top: 30px;
+            margin-bottom: 40px;
+            text-align: center;
+            width: 100%;
+            background: rgba(255,255,255,0.7);
+            padding: 30px 15px;
+            border-radius: 20px;
+            box-shadow: 0 5px 15px rgba(255, 182, 193, 0.4);
+            backdrop-filter: blur(5px);
+        }
+
+        .hero-section h1 {
+            color: #d16b8a;
+            font-size: 2.2rem;
+            line-height: 1.2;
+            margin-bottom: 15px;
+            min-height: 80px;
+        }
+
+        .typewriter-text {
+            color: var(--dark-text);
+            font-size: 1.05rem;
+            line-height: 1.6;
+            margin-bottom: 10px;
+            min-height: 25px;
+        }
+
+        .scrapbook-title {
+            font-family: 'Caveat', cursive;
+            font-size: 2.5rem;
+            color: #d16b8a;
+            margin: 30px 0 20px 0;
+            text-align: center;
+            transform: rotate(-3deg);
+        }
+
+        .polaroid-gallery {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            gap: 40px;
+            opacity: 0;
+            transition: opacity 1.5s ease;
+        }
+
+        .polaroid {
+            background: #fff;
+            padding: 12px 12px 50px 12px;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
+            border-radius: 2px;
+            width: 85%; /* Mobile optimized width */
+            max-width: 300px;
+            position: relative;
+            transform-origin: center;
+        }
+
+        /* Alternating Rotations for Scrapbook Feel */
+        .polaroid:nth-child(odd) { transform: rotate(-4deg); }
+        .polaroid:nth-child(even) { transform: rotate(5deg); }
+        .polaroid:nth-child(3n) { transform: rotate(-2deg); }
+        
+        .polaroid img {
+            width: 100%;
+            height: 250px;
+            object-fit: cover;
+            border-radius: 2px;
+        }
+
+        .polaroid-caption {
+            position: absolute;
+            bottom: 10px;
+            left: 0;
+            width: 100%;
+            text-align: center;
+            font-family: 'Caveat', cursive;
+            color: #333;
+            font-size: 1.6rem;
+        }
+
+        /* Decorative stickers */
+        .sticker {
+            position: absolute;
+            font-size: 2.5rem;
+            z-index: 5;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.2));
+        }
+
+        /* Buttons Section */
+        .buttons-section {
+            margin-top: 50px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            width: 80%;
+            opacity: 0;
+            transition: opacity 1.5s ease;
+        }
+
+        button.action-btn {
+            padding: 15px;
+            border: none;
+            border-radius: 30px;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+            width: 100%;
+        }
+        .btn-surat { background-color: #fff; color: #d16b8a; box-shadow: 0 4px 15px rgba(255, 182, 193, 0.8); border: 2px solid #ffb6c1; }
+        .btn-surat:active { transform: scale(0.95); }
+
+        .modal {
+            display: none;
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 200;
+            backdrop-filter: blur(5px);
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .modal-content {
+            background: #fffdf7;
+            width: 85%;
+            padding: 40px 25px;
+            border-radius: 15px;
+            position: relative;
+            text-align: center;
+            border: 2px dashed #ffb6c1;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            transform: scale(0.8);
+            transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 2rem;
+            color: #aaa;
+            cursor: pointer;
+        }
+
+        .surat-text {
+            font-family: 'Caveat', cursive;
+            font-size: 1.5rem;
+            line-height: 1.6;
+            color: #444;
+            margin-top: 15px;
+            text-align: left;
+        }
+        
+        /* Floating Emojis background */
+        .bg-element {
+            position: absolute;
+            font-size: 1.5rem;
+            opacity: 0.6;
+            z-index: 1;
+        }
+
+        .show { opacity: 1 !important; transform: scale(1) !important; }
+    </style>
+</head>
+<body>
+
+    <!-- LANY - XXL Audio (Ensure lany-xxl.mp3 is in the same folder) -->
+    <audio id="bg-music" loop>
+        <source src="lany-xxl.mp3" type="audio/mpeg">
+    </audio>
+
+    <!-- Mobile Screen Wrapper -->
+    <div id="mobile-wrapper">
+
+        <!-- === 1. LOCKSCREEN === -->
+        <div id="lockscreen">
+            <div class="lock-top">
+                <div class="time" id="clock">00:00</div>
+                <div class="date" id="date">Monday, Jan 1</div>
+            </div>
+            
+            <div class="pin-container">
+                <p style="font-size: 0.95rem; opacity: 0.9; margin-bottom: 5px;">Enter PIN (1234) to unlock</p>
+                <div class="pin-dots" id="pin-dots">
+                    <div class="dot"></div><div class="dot"></div>
+                    <div class="dot"></div><div class="dot"></div>
+                </div>
+            </div>
+
+            <div class="keypad">
+                <button class="key" onclick="pressKey('1')">1</button>
+                <button class="key" onclick="pressKey('2')">2</button>
+                <button class="key" onclick="pressKey('3')">3</button>
+                <button class="key" onclick="pressKey('4')">4</button>
+                <button class="key" onclick="pressKey('5')">5</button>
+                <button class="key" onclick="pressKey('6')">6</button>
+                <button class="key" onclick="pressKey('7')">7</button>
+                <button class="key" onclick="pressKey('8')">8</button>
+                <button class="key" onclick="pressKey('9')">9</button>
+                <button class="key" style="visibility: hidden;">*</button>
+                <button class="key" onclick="pressKey('0')">0</button>
+                <button class="key" onclick="pressKey('C')" style="font-size: 1.5rem; border:none; background:none;">⌫</button>
+            </div>
+        </div>
+
+        <!-- === 2. MINI GAME SCREEN === -->
+        <div id="game-screen">
+            <div class="game-header">
+                <h2>Catch My Hearts!</h2>
+                <p>Catch 10 hearts to continue ❤️</p>
+                <div class="score-board" id="score-display">0 / 10</div>
+            </div>
+            
+            <!-- The catcher paddle -->
+            <div id="paddle">💌</div>
+            
+            <!-- Win Notification -->
+            <div id="win-message">
+                <h3>Yay! You caught them all! 🎉</h3>
+                <p style="font-size: 0.9rem; color: #555;">Unlocking your surprise...</p>
+            </div>
+        </div>
+
+        <!-- === 3. MAIN SCROLLABLE CONTENT === -->
+        <div id="main-content">
+            <button class="music-btn" onclick="toggleMusic()">🎵 Play/Pause</button>
+            
+            <div class="scroll-container">
+                
+                <!-- Background decorative elements -->
+                <div class="bg-element" style="top: 100px; left: 10px;">🌸</div>
+                <div class="bg-element" style="top: 300px; right: 20px;">🎂</div>
+                <div class="bg-element" style="top: 600px; left: 30px;">✨</div>
+                <div class="bg-element" style="top: 900px; right: 10px;">🌷</div>
+
+                <!-- Hero Text -->
+                <div class="hero-section">
+                    <h1 id="title-text"></h1>
+                    <p class="typewriter-text" id="p1-text"></p>
+                    <p class="typewriter-text" id="p2-text"></p>
+                </div>
+
+                <!-- Scrapbook Gallery -->
+                <div class="polaroid-gallery" id="polaroid-gallery">
+                    <h2 class="scrapbook-title">Beautiful Memories ✨</h2>
+                    
+                    <div class="polaroid">
+                        <div class="sticker" style="top: -15px; left: -15px;">📌</div>
+                        <img src="https://images.unsplash.com/photo-1518895949257-7621c3c786d7?q=80&w=400&auto=format&fit=crop" alt="Memory">
+                        <div class="polaroid-caption">You're so pretty! 🌸</div>
+                    </div>
+
+                    <div class="polaroid">
+                        <img src="https://images.unsplash.com/photo-1530103862676-de888cdfb1ab?q=80&w=400&auto=format&fit=crop" alt="Memory">
+                        <div class="polaroid-caption">Best Day Ever ❤️</div>
+                    </div>
+
+                    <div class="polaroid">
+                        <div class="sticker" style="top: -20px; right: -10px;">🎀</div>
+                        <img src="https://images.unsplash.com/photo-1558636508-e0db3814bd1d?q=80&w=400&auto=format&fit=crop" alt="Memory">
+                        <div class="polaroid-caption">Happy Birthday! 🎂</div>
+                    </div>
+                    
+                    <div class="polaroid">
+                        <img src="https://images.unsplash.com/photo-1520854221256-17451cc331bf?q=80&w=400&auto=format&fit=crop" alt="Memory">
+                        <div class="polaroid-caption">Keep Blooming 🌷</div>
+                    </div>
+
+                    <div class="polaroid">
+                        <div class="sticker" style="bottom: -10px; right: -15px;">💖</div>
+                        <img src="https://images.unsplash.com/photo-1513201099705-a9746e1e201f?q=80&w=400&auto=format&fit=crop" alt="Memory">
+                        <div class="polaroid-caption">More Surprises! 🎁</div>
+                    </div>
+                </div>
+
+                <!-- Action Button at the bottom -->
+                <div class="buttons-section" id="action-buttons">
+                    <button class="action-btn btn-surat" onclick="openModal('modalSurat')">💌 Open Your Secret Letter</button>
+                    <p style="text-align: center; font-size: 0.8rem; color: #888; margin-top: 10px;">Scroll back up if you want! ⬆️</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- === 4. LETTER MODAL === -->
+        <div class="modal" id="modalSurat">
+            <div class="modal-content">
+                <span class="close-btn" onclick="closeModal('modalSurat')">&times;</span>
+                <h2 style="color: #d16b8a; font-family: 'Poppins', sans-serif;">Dearest Mikyal,</h2>
+                <hr style="border: 1px solid var(--pink); margin: 10px 0;">
+                <p class="surat-text">
+                    Happy Birthday! 🎉<br><br>
+                    Thank you for being such an amazing person. I hope this new chapter brings you closer to your dreams, fills your days with endless laughter, and surrounds you with all the love you truly deserve.<br><br>
+                    Keep shining brilliantly. I will always be here, cheering for you! ✨<br><br>
+                    With lots of love, ❤️
+                </p>
+            </div>
+        </div>
+
+    </div> <!-- End Mobile Wrapper -->
+
+    <script>
+        // --- 1. CLOCK LOGIC ---
+        function updateClock() {
+            const now = new Date();
+            let hours = now.getHours().toString().padStart(2, '0');
+            let minutes = now.getMinutes().toString().padStart(2, '0');
+            document.getElementById('clock').innerText = `${hours}:${minutes}`;
+
+            const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+            document.getElementById('date').innerText = `${days[now.getDay()]}, ${months[now.getMonth()]} ${now.getDate()}`;
+        }
+        setInterval(updateClock, 1000);
+        updateClock();
+
+        // --- 2. PIN LOCK LOGIC ---
+        const lockscreen = document.getElementById('lockscreen');
+        let currentPin = '';
+        const correctPin = '1234'; 
+        let audioInitialized = false;
+
+        function pressKey(key) {
+            // TRIK AUDIO: Jalankan lagu dengan volume 0 (Mute) saat pengguna memencet angka PIN pertama.
+            // Karena dipanggil langsung dari aksi klik, browser tidak akan memblokirnya!
+            const bgMusic = document.getElementById('bg-music');
+            if (!audioInitialized) {
+                bgMusic.volume = 0;
+                const playPromise = bgMusic.play();
+                if (playPromise !== undefined) {
+                    playPromise.catch(e => console.log("Audio unlock bypassed", e));
+                }
+                audioInitialized = true;
+            }
+
+            if (key === 'C') {
+                currentPin = '';
+                updateDots();
+                return;
+            }
+            if (currentPin.length < 4) {
+                currentPin += key;
+                updateDots();
+            }
+            if (currentPin.length === 4) {
+                setTimeout(() => {
+                    if (currentPin === correctPin) {
+                        unlockToGame();
+                    } else {
+                        currentPin = '';
+                        updateDots();
+                        // Shake effect on error
+                        const dotsContainer = document.getElementById('pin-dots');
+                        dotsContainer.style.transform = 'translateX(-10px)';
+                        setTimeout(() => dotsContainer.style.transform = 'translateX(10px)', 100);
+                        setTimeout(() => dotsContainer.style.transform = 'translateX(0)', 200);
+                    }
+                }, 200);
+            }
+        }
+
+        function updateDots() {
+            const dots = document.querySelectorAll('.dot');
+            dots.forEach((dot, index) => {
+                if (index < currentPin.length) dot.classList.add('filled');
+                else dot.classList.remove('filled');
+            });
+        }
+
+        // --- 3. TRANSITION TO GAME ---
+        function unlockToGame() {
+            lockscreen.style.transform = 'translateY(-100%)';
+            lockscreen.style.opacity = '0';
+            setTimeout(() => {
+                lockscreen.style.display = 'none';
+                initGame();
+            }, 600);
+        }
+
+        // --- 4. GAME LOGIC ---
+        const gameScreen = document.getElementById('game-screen');
+        const paddle = document.getElementById('paddle');
+        const scoreDisplay = document.getElementById('score-display');
+        let score = 0;
+        let gameActive = false;
+        let wrapperRect;
+
+        // Paddle Drag Logic (Touch & Mouse)
+        let isDragging = false;
+        
+        function movePaddle(clientX) {
+            if(!gameActive) return;
+            const wrapRect = document.getElementById('mobile-wrapper').getBoundingClientRect();
+            // Calculate position relative to the wrapper
+            let newLeft = clientX - wrapRect.left;
+            // Boundaries
+            if (newLeft < 35) newLeft = 35; // half paddle width
+            if (newLeft > wrapRect.width - 35) newLeft = wrapRect.width - 35;
+            
+            paddle.style.left = newLeft + 'px';
+        }
+
+        // Touch events for Mobile
+        gameScreen.addEventListener('touchstart', (e) => { isDragging = true; movePaddle(e.touches[0].clientX); });
+        gameScreen.addEventListener('touchmove', (e) => { 
+            e.preventDefault(); // Prevent scrolling while playing
+            if(isDragging) movePaddle(e.touches[0].clientX); 
+        }, {passive: false});
+        gameScreen.addEventListener('touchend', () => { isDragging = false; });
+
+        // Mouse events for Desktop Preview
+        gameScreen.addEventListener('mousedown', (e) => { isDragging = true; movePaddle(e.clientX); });
+        gameScreen.addEventListener('mousemove', (e) => { if(isDragging) movePaddle(e.clientX); });
+        gameScreen.addEventListener('mouseup', () => { isDragging = false; });
+        gameScreen.addEventListener('mouseleave', () => { isDragging = false; });
+
+        function initGame() {
+            gameScreen.style.display = 'flex';
+            gameActive = true;
+            wrapperRect = document.getElementById('mobile-wrapper').getBoundingClientRect();
+            spawnHeart();
+            gameLoop();
+        }
+
+        let hearts = [];
+        let spawnInterval = 800; // spawn every 0.8s
+        let lastSpawn = 0;
+
+        function spawnHeart() {
+            if(!gameActive) return;
+            const heart = document.createElement('div');
+            heart.className = 'falling-heart';
+            heart.innerText = '❤️';
+            
+            // Random X position within wrapper
+            const maxLeft = document.getElementById('mobile-wrapper').clientWidth - 40;
+            heart.style.left = Math.floor(Math.random() * maxLeft) + 'px';
+            heart.style.top = '-50px';
+            
+            gameScreen.appendChild(heart);
+            
+            // Random speed
+            let speed = Math.random() * 3 + 3; // pixels per frame
+            hearts.push({ el: heart, y: -50, speed: speed });
+            
+            if(gameActive) setTimeout(spawnHeart, spawnInterval);
+        }
+
+        function gameLoop() {
+            if(!gameActive) return;
+
+            const paddleRect = paddle.getBoundingClientRect();
+            const wrapRect = document.getElementById('mobile-wrapper').getBoundingClientRect();
+
+            for (let i = 0; i < hearts.length; i++) {
+                let h = hearts[i];
+                h.y += h.speed;
+                h.el.style.top = h.y + 'px';
+
+                const heartRect = h.el.getBoundingClientRect();
+
+                // Check Collision (AABB)
+                if (heartRect.bottom >= paddleRect.top &&
+                    heartRect.top <= paddleRect.bottom &&
+                    heartRect.right >= paddleRect.left &&
+                    heartRect.left <= paddleRect.right) {
+                    
+                    // Caught!
+                    score++;
+                    scoreDisplay.innerText = `${score} / 10`;
+                    h.el.remove();
+                    hearts.splice(i, 1);
+                    i--;
+                    
+                    // Pop effect on paddle
+                    paddle.style.transform = 'translateX(-50%) scale(1.3)';
+                    setTimeout(() => paddle.style.transform = 'translateX(-50%) scale(1)', 150);
+
+                    if(score >= 10) {
+                        winGame();
+                    }
+                } 
+                // Missed (Fell out of wrapper bounds)
+                else if (h.y > wrapRect.height) {
+                    h.el.remove();
+                    hearts.splice(i, 1);
+                    i--;
+                }
+            }
+            requestAnimationFrame(gameLoop);
+        }
+
+        // --- 5. TRANSITION TO MAIN CONTENT ---
+        function winGame() {
+            gameActive = false;
+            // Clear remaining hearts
+            hearts.forEach(h => h.el.remove());
+            hearts = [];
+
+            // Show Win Message
+            document.getElementById('win-message').classList.add('show');
+            
+            // Mainkan Lagu Sebenarnya!
+            // Kita sudah memutarnya secara MUTE saat pencet PIN tadi.
+            // Sekarang tinggal kembalikan volumenya dan mulai dari detik awal.
+            const bgMusic = document.getElementById('bg-music');
+            bgMusic.currentTime = 0;
+            bgMusic.volume = 0.6; 
+            
+            // Ekstra play command jaga-jaga
+            const playPromise = bgMusic.play();
+            if (playPromise !== undefined) {
+                playPromise.catch(e => console.log(e));
+            }
+
+            // Transition out of game screen
+            setTimeout(() => {
+                gameScreen.style.opacity = '0';
+                gameScreen.style.transition = 'opacity 0.8s';
+                
+                setTimeout(() => {
+                    gameScreen.style.display = 'none';
+                    startMainCelebration();
+                }, 800);
+            }, 2500);
+        }
+
+        // --- 6. MAIN CELEBRATION (Typewriter & Reveal) ---
+        const text1 = "🎉 Happy Birthday,\nMikyal Hasna Mutawali! 🎉";
+        const text2 = "Wishing you a beautiful day filled with happiness, health, and a year filled with joy.";
+        const text3 = "May all your sweetest dreams come true. Scroll down for your scrapbook! 👇";
+
+        function typeWriter(elementId, text, speed, callback) {
+            let i = 0;
+            let element = document.getElementById(elementId);
+            element.innerHTML = ''; // clear first
+            function type() {
+                if (i < text.length) {
+                    if(text.charAt(i) === '\n') {
+                        element.innerHTML += '<br>';
+                    } else {
+                        element.innerHTML += text.charAt(i);
+                    }
+                    i++;
+                    setTimeout(type, speed);
+                } else if (callback) {
+                    setTimeout(callback, 300);
+                }
+            }
+            type();
+        }
+
+        function startMainCelebration() {
+            document.getElementById('main-content').style.display = 'block';
+
+            setTimeout(() => {
+                typeWriter('title-text', text1, 50, () => {
+                    typeWriter('p1-text', text2, 35, () => {
+                        typeWriter('p2-text', text3, 35, () => {
+                            // Reveal polaroids and buttons
+                            document.getElementById('polaroid-gallery').style.opacity = '1';
+                            document.getElementById('action-buttons').style.opacity = '1';
+                        });
+                    });
+                });
+            }, 500);
+        }
+
+        // --- 7. MUSIC & MODALS ---
+        function toggleMusic() {
+            const audio = document.getElementById('bg-music');
+            if(audio.paused) {
+                audio.play().catch(e => console.log(e));
+            } else {
+                audio.pause();
+            }
+        }
+
+        function openModal(id) {
+            const modal = document.getElementById(id);
+            modal.style.display = 'flex';
+            setTimeout(() => {
+                modal.style.opacity = '1';
+                modal.querySelector('.modal-content').classList.add('show');
+            }, 10);
+        }
+
+        function closeModal(id) {
+            const modal = document.getElementById(id);
+            modal.style.opacity = '0';
+            modal.querySelector('.modal-content').classList.remove('show');
+            setTimeout(() => {
+                modal.style.display = 'none';
+            }, 400);
+        }
+    </script>
+</body>
+</html>
